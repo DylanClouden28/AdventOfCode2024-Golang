@@ -1,20 +1,13 @@
 package main
 
 import (
+	"AOC/util"
 	"fmt"
-	"io"
-	"log"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
 )
 
-func checkError(e error){
-	if e != nil{
-		log.Fatal(e)
-	}
-}
 
 func absInt(x int) int {
     if x < 0 {
@@ -24,12 +17,7 @@ func absInt(x int) int {
 }
 
 func main(){
-	file, err := os.Open("./input.txt")
-	checkError(err)
-	data, err := io.ReadAll(file)
-	checkError(err)
-
-	lines := strings.Split(string(data), "\n")
+	lines := util.GetLines("./input.txt")
 
 	total := 0
 	var firstCol []int
@@ -37,22 +25,18 @@ func main(){
 	similarScore := make(map[int]int)
 	for _, line := range lines{
 		firstNum, err := strconv.Atoi(strings.Split(line, " ")[0])
-		checkError(err)
+		util.CheckError(err)
 		secondSplit := strings.Split(line, " ")
 		SecondNum, err := strconv.Atoi(secondSplit[3])
-		checkError(err)
+		util.CheckError(err)
 		firstCol = append(firstCol, firstNum)
 		secondCol = append(secondCol, SecondNum)
 		similarScore[SecondNum] += 1
 	}
 
-	sort.Slice(firstCol, func(i, j int) bool {
-		return firstCol[i] < firstCol[j]
-	})
+	sort.Ints(firstCol)
 
-	sort.Slice(secondCol, func(i, j int) bool {
-		return secondCol[i] < secondCol[j]
-	})
+	sort.Ints(secondCol)
 
 	for index, value := range firstCol{
 		total += absInt(value - secondCol[index])
