@@ -36,17 +36,32 @@ func getUpdateSteps(s []string) [][]int{
 	return allSteps
 }
 
-func isValidUpdate(update []int, pageOrdering map[int][]int) bool{
+func isValidUpdate(update []int, pageOrdering map[int][]int) (bool, int){
 	for index, pageNumber := range update{
 		previousValues := update[0:index]
 		pageRules := pageOrdering[pageNumber]
 		for _, prevVal := range previousValues{
 			if (slices.Contains(pageRules, prevVal)){
-				return false
+				return false, prevVal
 			}
 		}
 	}
-	return true
+	return true, -1
+}
+
+// Loop through find index that is causing problems swap with one it has issues with and run again till fixed
+func fixUpdate(update []int, pageOrdering map[int][]int) []int{
+	newUpdate := slices.Clone(update)
+	isFixed := false
+	for (!isFixed){
+		isValid, badVal := isValidUpdate(newUpdate, pageOrdering)
+		if isValid{
+			isFixed = true
+			break
+		}
+		tempUpdate := slices.Clone(update)
+		tempUpdate
+	}
 }
 
 func main(){
@@ -59,11 +74,20 @@ func main(){
 	totalp1 := 0
 
 	for _, update := range updateSteps{
-		isValid := isValidUpdate(update, pageOrdering)
+		isValid, _ := isValidUpdate(update, pageOrdering)
 		fmt.Printf("IsValid Update: %t\n", isValid)
 		if isValid{
 			totalp1 += update[len(update) / 2]
 		}
 	}
 	fmt.Printf("Total: %d\n", totalp1)
+
+
+	for _, update := range updateSteps{
+		isValid, _ := isValidUpdate(update, pageOrdering)
+		fmt.Printf("IsValid Update: %t\n", isValid)
+		if isValid{
+			totalp1 += update[len(update) / 2]
+		}
+	}
 }
