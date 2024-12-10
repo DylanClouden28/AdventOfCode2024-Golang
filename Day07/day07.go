@@ -2,6 +2,9 @@ package main
 
 import (
 	"AOC/util"
+	"errors"
+	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -41,21 +44,54 @@ func generateCombinations(length int, maxNum int) [][]Operator {
 
 // Make function the evaluates combination of operators following PEMDAS
 
+func filterOperators(o []Operator, toBe Operator) []Operator{
+	newSlice := []Operator{}
+	for _, value := range o{
+		if value == toBe{
+			newSlice = append(newSlice, value)
+		} else{
+			// -1 represents blank space for current operator
+			newSlice = append(newSlice, -1)
+		}
+
+	}
+	return newSlice
+}
+
+func computeOperation(o Operator, a int, b int) (int, error){
+	if (o == add){
+		return a + b, nil
+	}
+	if (o == multiply){
+		return a * b, nil
+	}
+	return -1, errors.New("no operation found")
+}
+
+func remove(slice []int, s int) []int {
+    return append(slice[:s], slice[s+1:]...)
+}
+
 func (equation Equation) findOperators() ([]Operator, bool){
 	//possibleOperators := []Operator{add, multiply}
 	combinations := generateCombinations(len(equation.operands) - 1, 1)
-	for index, combination := range combinations{
-		total := 0
-		for _, operator := range combination{
-			// Run evulation function that uses pemdas
-			// if operator == add{
-			// 	total += 
-			// }
-			// if operator == multiply{
-
-			// }
+	for _, combination := range combinations{
+		tempOperands := slices.Clone(equation.operands)
+		for _, opType := range []Operator{multiply, add}{
+			for idxOp, operator := range filterOperators(combination, opType){
+				if operator == -1{
+					continue
+				}
+				result, err := computeOperation(operator, tempOperands[idxOp], tempOperands[idxOp + 1])
+				util.CheckError(err)
+				tempOperands[idxOp] = result
+				tempOperands = remove(tempOperands, idxOp + 1)
+			}
 		}
-	}
+		if tempOperands[0] == equation.result{
+			return combination, true
+		}
+		}
 	return []Operator{}, false
 }
 
@@ -82,6 +118,10 @@ func main(){
 	lines := util.GetLines("./test.txt")
 	equations := getEquations(lines)
 	for _, equation := range equations{
-		equation.findOperators()
+		validOperator, ok := equation.findOperators()
+		if !ok{
+			continue
+		}
+		fmt.Println("Found valid Operators: ", validOperator);
 	}
 }
