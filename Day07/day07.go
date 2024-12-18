@@ -14,6 +14,7 @@ type Operator int
 const (
 	add Operator = iota
 	multiply
+	concat
 )
 
 type Equation struct {
@@ -65,6 +66,11 @@ func computeOperation(o Operator, a int, b int) (int, error){
 	if (o == multiply){
 		return a * b, nil
 	}
+	if (o == concat){
+		concatString := strconv.Itoa(a) + strconv.Itoa(b)
+		number, err := strconv.Atoi(concatString)
+		return number, err
+	}
 	return -1, errors.New("no operation found")
 }
 
@@ -77,16 +83,29 @@ func (equation Equation) findOperators() ([]Operator, bool){
 	combinations := generateCombinations(len(equation.operands) - 1, 1)
 	for _, combination := range combinations{
 		tempOperands := slices.Clone(equation.operands)
-		for _, opType := range []Operator{multiply, add}{
-			for idxOp, operator := range filterOperators(combination, opType){
-				if operator == -1{
-					continue
-				}
-				result, err := computeOperation(operator, tempOperands[idxOp], tempOperands[idxOp + 1])
-				util.CheckError(err)
-				tempOperands[idxOp] = result
-				tempOperands = remove(tempOperands, idxOp + 1)
-			}
+		for _, operator := range combination {
+			result, err := computeOperation(operator, tempOperands[0], tempOperands[1])
+			util.CheckError(err)
+			tempOperands[0] = result
+			tempOperands = remove(tempOperands,  1)
+		}
+		if tempOperands[0] == equation.result{
+			return combination, true
+		}
+		}
+	return []Operator{}, false
+}
+
+func (equation Equation) findOperators_p2() ([]Operator, bool){
+	//possibleOperators := []Operator{add, multiply}
+	combinations := generateCombinations(len(equation.operands) - 1, 2)
+	for _, combination := range combinations{
+		tempOperands := slices.Clone(equation.operands)
+		for _, operator := range combination {
+			result, err := computeOperation(operator, tempOperands[0], tempOperands[1])
+			util.CheckError(err)
+			tempOperands[0] = result
+			tempOperands = remove(tempOperands,  1)
 		}
 		if tempOperands[0] == equation.result{
 			return combination, true
@@ -115,13 +134,29 @@ func getEquations(s []string) []Equation{
 }
 
 func main(){
-	lines := util.GetLines("./test.txt")
+	lines := util.GetLines("./input.txt")
 	equations := getEquations(lines)
+	total := 0
 	for _, equation := range equations{
-		validOperator, ok := equation.findOperators()
+		_, ok := equation.findOperators()
 		if !ok{
 			continue
 		}
-		fmt.Println("Found valid Operators: ", validOperator);
+		total += equation.result
+		// fmt.Println("Equation Result: ", equation.result)
+		// fmt.Println("Found valid Operators: ", validOperator);
 	}
+	fmt.Printf("Total of values is: %d\n", total)
+
+	totalp2 := 0
+	for _, equation := range equations{
+		_, ok := equation.findOperators_p2()
+		if !ok{
+			continue
+		}
+		totalp2 += equation.result
+		// fmt.Println("Equation Result: ", equation.result)
+		// fmt.Println("Found valid Operators: ", validOperator);
+	}
+	fmt.Printf("Total of values is: %d\n", totalp2)
 }
