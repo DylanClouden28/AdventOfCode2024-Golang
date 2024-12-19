@@ -44,14 +44,17 @@ func (a antenna) findAntiPos(otherAntenna antenna)coordinates{
 	return antiPos
 }
 
-func (a antenna) findMultiAntiPos(otherAntenna antenna, antennaCount int)[]coordinates{
+func (a antenna) findMultiAntiPos(otherAntenna antenna, antenna_map antenna_Map)[]coordinates{
 	antiNodes := []coordinates{}
 	antiPos := otherAntenna.coords
 	tempPos := a.coords
 	diffX := (a.coords.X - antiPos.X)
 	diffY := (a.coords.Y - antiPos.Y)
-	for i := 0; i<antennaCount; i++{
+	for {
 		tempPos = coordinates{X: tempPos.X + diffX, Y: tempPos.Y + diffY}
+		if tempPos.outsideOfMap(antenna_map){
+			break
+		}
 		antiNodes = append(antiNodes, tempPos)
 	}
 	return antiNodes
@@ -76,16 +79,14 @@ func (a *antenna_Map) findAntiNodes_p2()map[coordinates]bool{
 	AntiNodes := map[coordinates]bool{}
 	for _, antennas := range a.antennas{
 		for _, antenna := range antennas{
+			AntiNodes[antenna.coords] = true
 			for _, otherAntenna := range antennas{
 				//If same atenna continue
 				if antenna.coords.equals(otherAntenna.coords){
 					continue
 				}
-				antiNodesPos := antenna.findMultiAntiPos(otherAntenna, len(antennas))
+				antiNodesPos := antenna.findMultiAntiPos(otherAntenna, *a)
 				for _, node := range antiNodesPos{
-					if node.outsideOfMap(*a){
-						continue
-					}
 					AntiNodes[node] = true
 				}
 			}
@@ -114,12 +115,32 @@ func (a *antenna_Map) findAntiNodes()map[coordinates]bool{
 	return AntiNodes
 }
 
+func (a *antenna_Map) drawMap(s []string, antiNodes map[coordinates]bool){
+	for idy, line := range s{
+		for idx, char := range line{
+			if char != '.'{
+				fmt.Printf("%c", char)
+				continue
+			}
+			_, ok := antiNodes[coordinates{X: idx, Y: idy}]
+			if ok{
+				fmt.Printf("#")
+				continue
+			}
+			fmt.Printf(".")
+		}
+		fmt.Printf("\n")
+	}
+}
+
 func main(){
-	lines := util.GetLines("./test.txt")
+	lines := util.GetLines("./input.txt")
 	newMap := antenna_Map{width: len(lines), height: len(lines[0])}
 	newMap.setAtennaLocations(lines)
 	antiNodes := newMap.findAntiNodes()
 	antiNodesp2 := newMap.findAntiNodes_p2()
+	//newMap.drawMap(lines, antiNodes)
 	fmt.Printf("Total AntiNodes: %d\n", len(antiNodes))
+	//newMap.drawMap(lines, antiNodesp2)
 	fmt.Printf("Total AntiNodes: %d\n", len(antiNodesp2))
 }
